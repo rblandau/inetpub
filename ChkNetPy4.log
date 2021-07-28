@@ -1,0 +1,36 @@
+20210728_182023   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_182034   Ping! Ping www.ricksoft.com                 notok
+20210728_182202   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_182213   Ping! Ping www.ricksoft.com                 notok
+20210728_182415   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_182426   Ping! Ping ricksoft.com                     notok
+20210728_183952   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_184037   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_184139   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_184207   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_185019   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_185250   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_185335   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_190011   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_190039   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_190108   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_190110   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_190235   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_190248   Ping! Ping wxyz.thisisabadname.foo          fail
+20210728_190259   Xlate! Xlate wxyz.thisisabadname.foo              notrans
+20210728_190300   HTTP! HTTP http://www.ricksoft.com/thisisabadname notfound
+20210728_190531   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_190543   Ping! Ping wxyz.thisisabadname.foo                          fail
+20210728_190554   Xlate! Xlate wxyz.thisisabadname.foo                          notrans
+20210728_190555   HTTP! HTTP http://www.ricksoft.com/thisisabadname           notfound
+20210728_190819   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_190831   Ping!  Ping wxyz.thisisabadname.foo                          fail
+20210728_190843   Xlate! Xlate wxyz.thisisabadname.foo                          notrans
+20210728_190843   HTTP!  HTTP http://www.ricksoft.com/thisisabadname           notfound
+20210728_191048   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_191100   Ping!  Ping  wxyz.thisisabadname.foo                      fail
+20210728_191111   Xlate! Xlate wxyz.thisisabadname.foo                      notrans
+20210728_191112   HTTP!  HTTP  http://www.ricksoft.com/thisisabadname       notfound
+20210728_191346   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******
+20210728_191357   Ping!  Ping  mail.ricksoft.com                            notok
+20210728_191413   CheckNet CheckNetPy4-01.py checking network from RICKS-YOGA940 ******

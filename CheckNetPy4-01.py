@@ -1,26 +1,27 @@
 #!/usr/bin/python3
-#                   RBLandau 20210509
+#                   RBLandau 20210728
 #
 '''
-CheckNet3.py
+CheckNet4.py
 
 Check the state of the network.
-Ping some nodes, translate some names, retrieve some pages. arg: 
-Record a marker at the beginning of each checking cycle.  
-Record only errors.
-One CLI arg: either logfilename or "-" for stdout.  If aimed at a file, 
-THE LOG FILE MUST EXIST, perhaps empty, when the program starts!
+ Ping some nodes, translate some names, retrieve some pages. arg: 
+ Record a marker at the beginning of each checking cycle.  
+ Record only errors.
+
+One optional CLI arg: either logfilename or "-" for stdout.  
+ Defaults to Defaults to current directory, ./ChkNetPy4.log
+If aimed at a file, 
+ THE LOG FILE MUST EXIST, perhaps empty, when the program starts!
 If the log file is not NTRC.ntrace-accessible, complain.  Check this on
  every attempt to write anything to the file.  Complain and
  retry with exponential backoff.  
 
-Unlike the old versions, this will run once and exit.  
+RUN ONE TIME AND EXIT!
+ Unlike the old versions, this will run once and exit.  
  A cron job or equivalent will run this every so often.
 
-One optional CLI arg: filespec for log file.  Defaults to current directory,
- ./chknetpy3.log
-
-New version for python3 20200309.
+New version for python3 20200309; and further improvements since then.
 
 @author: landau
 '''
@@ -36,12 +37,15 @@ import datetime
 from NewTrace   import NTRC, ntrace, ntracef
 
 
+# ----------------------------------------------
 # c l a s s   C G  
 # Read-only or write-once global data.
 class CG():
     
     # PING    
-    lNodesPing = [ "smtp.ricksoft.com", "mail.ricksoft.com" 
+    lNodesPing = [ "192.168.1.1"
+#                    , "www.ricksoft.com"
+                    , "smtp.ricksoft.com", "mail.ricksoft.com" 
                     , "www.yahoo.com"  
                     , "www.bing.com" 
 #                    , "wxyz.thisisabadname.foo"
@@ -61,18 +65,19 @@ class CG():
                     ]
 
     # Default log file and repeat cycle.
-    nRepeatInterval_Default = 15
-    nRepeatInterval = int(nRepeatInterval_Default)  # for production
-    sLogFile_Default = "./ChkNetPy3.log"
+#    nRepeatInterval_Default = 15
+#    nRepeatInterval = int(nRepeatInterval_Default)  # for production
+    sLogFile_Default = "./ChkNetPy4.log"
     sLogFile = sLogFile_Default
 
     cLog = None         # instance ptr for everyone to use
 
 
+# ----------------------------------------------
 # c l a s s   C L o g 
 class CLog(object):
     '''
-    Write to an existing log file, or maybe stdout.
+    class CLog: Write to an existing log file, or maybe to stdout.
 
     Test that the log file is available before writing;
     complain if not.  Retry with exponential backoff.
@@ -133,7 +138,7 @@ class CLog(object):
     @ntracef("LOG")
     def testFile(self, myFile, myTimeout, myRetries):
         '''
-        testFile: Test that file exists, complain if not.
+        function testFile: Test that file exists, complain if not.
         '''
         
         if myFile == "stdout": return True
@@ -174,12 +179,15 @@ class CLog(object):
         window.destroy()
 
 
+# ----------------------------------------------
 # c l a s s   C C o m m a n d
 class CCommand(object):
     '''
-    Execute a CLI command, parse results
+    class CCommand: Execute a CLI command, parse results
      using a regular expression supplied by the caller.  
     '''
+    ID = 99
+    
 
     @ntracef("CMD")
     def doCmd(self, mysCommand):
@@ -200,16 +208,19 @@ class CCommand(object):
         return sResult
 
 
+# ----------------------------------------------
 # c l a s s   C P i n g 
 class CPing(CCommand):
     '''
-    Ping a series of nodes.
+    class CPing: Ping a series of nodes.
     List of nodes supplied by caller.  
     
     Retry count supplied by caller.  
     Inherits capabilities from CCommand.
     '''
-
+    ID = 99
+    
+    
     @ntracef("PING")
     def __init__(self, mylNodes, mynTimes=1):
         self.lNodes = mylNodes
@@ -237,30 +248,37 @@ class CPing(CCommand):
     @ntracef("PING")
     def execute(self):
         for sNode in self.lNodes:
-            sCommand = self.sOsCommand % (sNode)
-            NTRC.ntracef(3, "PING", "proc CPing.execute cmd|%s| regex|%s|" 
-                    % (sCommand, self.sOsRegex))
-            lOutput = self.doParse(sCommand, self.sOsRegex)
-            if lOutput:
-                try:
-                    nOk = int(lOutput[0])
-                except (ValueError, TypeError):
-                    nOk = 0
-                if nOk == 0:
-                    sEval = "notok"
-                else:
-                    sEval = "ok"
+            sResult = self.ping_one(sNode)
+        return
+
+
+    @ntracef("PING")
+    def ping_one(self, mysNode):
+        sCommand = self.sOsCommand % (mysNode)
+        NTRC.ntracef(3, "PING", "proc CPing.ping_one cmd|%s| regex|%s|") 
+        lOutput = self.doParse(sCommand, self.sOsRegex)
+        if lOutput:
+            try:
+                nOk = int(lOutput[0])
+            except (ValueError, TypeError):
+                nOk = 0
+            if nOk == 0:
+                sEval = "notok"
             else:
-                sEval = "fail"
-            sResult = "Ping %-38s %s" % (sNode, sEval)
-            if not sEval == "ok":
-                g.cLog.fWriteLine("Ping! %s" % (sResult))
+                sEval = "ok"
+        else:
+            sEval = "fail"
+        sResult = "Ping  %-44s %s" % (mysNode, sEval)
+        if not sEval == "ok":
+            g.cLog.fWriteLine("Ping!  %s" % (sResult))
+        return (sEval, sResult)
 
 
+# ----------------------------------------------
 # c l a s s   C X l a t e 
 class CXlate(CCommand):
     '''
-    DNS-translate a series of domain names.
+    class CXlate: DNS-translate a series of domain names.
     List of nodes supplied by caller.  
     
     Weirdness: RoadRunner in Austin does not ever fail to 
@@ -274,6 +292,7 @@ class CXlate(CCommand):
 
     Inherits capabilities from CCommand.
     '''
+    ID = 99
     
 
     @ntracef("XLAT") 
@@ -299,23 +318,33 @@ class CXlate(CCommand):
     @ntracef("XLAT")
     def execute(self):
         for sNode in self.lNodes:
-            sIpAddr = self.getIP(sNode)
-            NTRC.ntracef(3, "XLAT", f"proc {sNode} translates to {sIpAddr}")
-            if sIpAddr:
-                sEval = "ok"
-            else:
-                sEval = "notrans"
-                sResult = "Xlate %-36s %s" % (sNode, sEval)
-                if not sEval == "ok":
-                    g.cLog.fWriteLine("Xlate! %s" % (sResult))
+            result = self.xlat_one(sNode)
+        return
 
 
+    @ntracef("XLAT")
+    def xlat_one(self, mysNode):
+        sIpAddr = self.getIP(mysNode)
+        NTRC.ntracef(3, "XLAT", f"proc {mysNode} translates to {sIpAddr}")
+        if sIpAddr:
+            sEval = "ok"
+            sResult = "Xlate %-44s %s" % (mysNode, sEval)
+        else:
+            sEval = "notrans"
+            sResult = "Xlate %-44s %s" % (mysNode, sEval)
+            if not sEval == "ok":
+                g.cLog.fWriteLine("Xlate! %s" % (sResult))
+        return (sEval, mysNode, sResult)
+
+
+# ----------------------------------------------
 # c l a s s   C G e t H t t p 
 class CGetHttp(CCommand):
     '''
-    Retrieve a series of HTTP pages.
+    class CGetHttp: Retrieve a series of HTTP pages.
     Inherits capabilities from CCommand.
     '''
+    ID = 99
 
     @ntracef("HTTP")
     def __init__(self, mylNodes):
@@ -324,22 +353,29 @@ class CGetHttp(CCommand):
 
     @ntracef("HTTP")
     def execute(self):
-        pass
         for sUrl in g.lNodesUrls:
-            response = requests.get(sUrl)
-            result = response.status_code
-            NTRC.ntracef(3, "HTTP", f"proc {sUrl} get status {result}")
-            if result == 200:
-                sEval = "ok"
-            elif result == 404:
-                sEval = "notfound"
-            else:
-                sEval = "fail"
-            sResult = "HTTP %-32s %s" % (sUrl, sEval)
-            if not sEval == "ok":
-                g.cLog.fWriteLine("HTTP! %s" % (sResult))
+            result = self.gethttp_one(sUrl)
+        return
 
 
+    @ntracef("HTTP")
+    def gethttp_one(self, mysUrl):
+        response = requests.get(mysUrl)
+        result = response.status_code
+        NTRC.ntracef(3, "HTTP", f"proc {mysUrl} get status {result}")
+        if result == 200:
+            sEval = "ok"
+        elif result == 404:
+            sEval = "notfound"
+        else:
+            sEval = "fail"
+        sResult = "HTTP  %-44s %s" % (mysUrl, sEval)
+        if not sEval == "ok":
+            g.cLog.fWriteLine("HTTP!  %s" % (sResult))
+        return (sEval, mysUrl, sResult)
+
+
+# ----------------------------------------------
 # M A I N  L I N E 
 
 @ntracef("MAIN")
@@ -365,6 +401,7 @@ def main(mysLogFile):
     return(0)
 
 
+# ----------------------------------------------
 # E N T R Y   P O I N T 
 
 if __name__ == '__main__':
@@ -418,6 +455,9 @@ if __name__ == '__main__':
 #               Improve comments slightly.
 # 20210509  RBL Redo a lot.  
 #               Fill out code for CXlate and CGetHttp.
+# 20210728  RBL Add check: do we have a local network at all?
+#               Restructure CPing: take the logic out of the for loop.
+#               Restructure CXlate and CGetHttp, too, the same way.
 # 
 # 
 
