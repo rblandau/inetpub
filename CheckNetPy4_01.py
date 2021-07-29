@@ -127,7 +127,7 @@ class CLog(object):
                         "ERROR fWriteLine IOError try|%s| file|%s| line|%s|" 
                         % (idxErrorCount+1, self.sLogFile, sOut))
                     sleep(1)
-        NTRC.ntracef(3, "LOG", f"proc done {sOut!r} {idxErrorCount=}")
+        NTRC.ntracef(3, "LOG", f"proc done {sOut!r} errs {idxErrorCount}")
 
 
     @ntracef("LOG", level=5)
@@ -225,30 +225,64 @@ class CPing(CCommand):
     def __init__(self, mylNodes, mynTimes=1):
         self.lNodes = mylNodes
         self.nTimes = mynTimes
-        # Determine whether it is Windows ping or Cygwin ping
-        # and set the command and regex appropriately.  
-        # The ping command with a --help option gives some, and, fortunately, 
-        # the two systems are detectably different.  
-        lTmp = self.doParse("ping --help", "(gnu.org)")
-        if not lTmp:
-            self.sOsCommand = ("/cygdrive/c/WINDOWS/system32/ping -n %s %s"
-                    % (self.nTimes,"%s"))
-            self.sOsRegex = "Received = (\d+)"
-        else:
-            self.sOsCommand = (
-                        "/usr/bin/ping --count=%s --size=64 %s 2>/dev/null" 
-                        % (self.nTimes, "%s"))
-            self.sOsRegex = "(\d+) packets received"
-        NTRC.ntracef(2,"PING","exit  CPing cmd|%s| regex|%s|"
-                % (self.sOsCommand, self.sOsRegex))
-# Quiet today
-#        g.cLog.fWriteLine("Pinging %s nodes" % (len(self.lNodes)))
+        
+        # Determine whether it is Windows ping or Cygwin or Ubuntu
+        #  and set the command and counter regex appropriately.  
+
+        """
+        Most pings come with a -V option for version, and the 
+         results are detectably different.
+        
+        Windows 
+        ping -V => "Bad option -V"
+        Cygwin
+        ping -V => "ping (GNU inetutils) 1.9.4"
+        Ubuntu
+        ping -V => "ping utility, iputils-s20180629"
+        """
+
+        # Empty until we determine the right type.    
+        self.sPingType = ""
+        (self.sOsCommand, self.sOsRegex) = ("", "")
+        
+        # Ubuntu:
+        if not self.sPingType:
+            lTmp = self.doParse("ping -V", "(ping utility)")
+            if lTmp:
+                self.sPingType = "Ubuntu"
+                self.sOsCommand = ("ping -c %s %s"
+                        % (self.nTimes,"%s"))
+                self.sOsRegex = "(%d+) received"
+
+        # Cygwin:
+        if not self.sPingType:
+            lTmp = self.doParse("ping -V", "(GNU inetutils)")
+            if lTmp:
+                self.sPingType = "Cygwin"
+                self.sOsCommand = ("ping -c %s %s"
+                        % (self.nTimes,"%s"))
+                self.sOsRegex = "(\d+) packets received"
+
+        # Windows:
+        if not self.sPingType:
+            lTmp = self.doParse("ping -V", "(Bad option)")
+            if lTmp:
+                self.sPingType = "Windows"
+                self.sOsCommand = ("/cygdrive/c/WINDOWS/system32/ping -n %s %s"
+                        % (self.nTimes,"%s"))
+                self.sOsRegex = "Received = (\d+)"
+        
+        NTRC.ntracef(2,"PING","exit  CPing os|%s| cmd|%s| regex|%s|"
+            % (self.sPingType, self.sOsCommand, self.sOsRegex))
         
 
     @ntracef("PING")
     def execute(self):
-        for sNode in self.lNodes:
-            sResult = self.ping_one(sNode)
+        # If we couldn't figure out what OS ping type to use, 
+        #  don't do it at all.
+        if self.sPingType:
+            for sNode in self.lNodes:
+                sResult = self.ping_one(sNode)
         return
 
 
@@ -268,7 +302,7 @@ class CPing(CCommand):
                 sEval = "ok"
         else:
             sEval = "fail"
-        sResult = "Ping  %-44s %s" % (mysNode, sEval)
+        sResult = "Ping %-44s %s" % (mysNode, sEval)
         if not sEval == "ok":
             g.cLog.fWriteLine("Ping!  %s" % (sResult))
         return (sEval, sResult)
@@ -328,10 +362,10 @@ class CXlate(CCommand):
         NTRC.ntracef(3, "XLAT", f"proc {mysNode} translates to {sIpAddr}")
         if sIpAddr:
             sEval = "ok"
-            sResult = "Xlate %-44s %s" % (mysNode, sEval)
+            sResult = "Xlat %-44s %s" % (mysNode, sEval)
         else:
             sEval = "notrans"
-            sResult = "Xlate %-44s %s" % (mysNode, sEval)
+            sResult = "Xlat %-44s %s" % (mysNode, sEval)
             if not sEval == "ok":
                 g.cLog.fWriteLine("Xlate! %s" % (sResult))
         return (sEval, mysNode, sResult)
@@ -369,7 +403,7 @@ class CGetHttp(CCommand):
             sEval = "notfound"
         else:
             sEval = "fail"
-        sResult = "HTTP  %-44s %s" % (mysUrl, sEval)
+        sResult = "HTTP %-44s %s" % (mysUrl, sEval)
         if not sEval == "ok":
             g.cLog.fWriteLine("HTTP!  %s" % (sResult))
         return (sEval, mysUrl, sResult)
