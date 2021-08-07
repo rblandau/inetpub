@@ -1,0 +1,10 @@
+
+c:\cygwin64\bin>c:\cygwin64\bin\bash.exe -l -c "cd working/checknet; ls; sh repeatsomething.sh 'sh copylogextract.sh ' 5"
+
+
+
+c:\cygwin64\bin>c:\cygwin64\bin\bash.exe -l -c "(cd d:; cd Inetpub/Scripts; ls -l; python2 checknetpy.py) &"
+
+c:\cygwin64\bin>c:\cygwin64\bin\bash.exe -l -c "(cd Inetpub/Scripts; ls -l; sh repeatsomething.sh 'sh copylogextract.sh ' 15s) & "
+
+
